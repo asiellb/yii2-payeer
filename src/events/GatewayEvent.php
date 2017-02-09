@@ -3,7 +3,7 @@
  * @author Alexey Samoylov <alexey.samoylov@gmail.com>
  */
 
-namespace yiidreamteam\payeer\events;
+namespace yarcode\payeer\events;
 
 use yii\base\Event;
 use yii\db\ActiveRecord;
