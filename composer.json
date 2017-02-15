@@ -27,8 +27,10 @@
     "source": "https://github.com/yarcode/yii2-payeer"
   },
   "require": {
+    "php": ">=5.4.0",
     "yiisoft/yii2": "~2",
-    "yii-dream-team/payeer": "~1"
+    "yii-dream-team/payeer": "~1",
+    "guzzlehttp/guzzle": "~6"
   },
   "autoload": {
     "psr-4": {
