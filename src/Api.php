@@ -6,7 +6,7 @@
 namespace yarcode\payeer;
 
 use GuzzleHttp\Client;
-use yacode\payeer\response\ApiResponse;
+use yarcode\payeer\response\ApiResponse;
 use yarcode\payeer\exceptions\ApiException;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
@@ -18,10 +18,14 @@ use yii\helpers\ArrayHelper;
  */
 class Api extends Component
 {
+    const CURRENCY_USD = 'USD';
+    const CURRENCY_RUB = 'RUB';
+    const CURRENCY_EUR = 'EUR';
+
     /** @var string Base API URL */
     public $baseUrl = 'https://payeer.com/ajax/api/api.php';
 
-    /** @var string */
+    /** @var string For instance "P1000000" */
     public $accountNumber;
     /** @var string */
     public $apiId;
@@ -49,9 +53,9 @@ class Api extends Component
      * @return array
      * Example return: ['balance' => ['EUR' => ['BUDGET' => 0, 'DOSTUPNO' => 0, 'DOSTUPNO_SYST' => 0], 'RUB' => [...], 'USD' => [...]]]
      */
-    public function getBalance()
+    public function balance()
     {
-        return $this->call('getBalance');
+        return $this->call('balance');
     }
 
     /**
@@ -62,7 +66,7 @@ class Api extends Component
      */
     private function call($action, $params = [])
     {
-        $result = $this->getHttpClient()->post('', [
+        $result = $this->getHttpClient()->post(null, [
             'form_params' => array_merge($params, [
                 'account' => $this->accountNumber,
                 'apiId' => $this->apiId,
@@ -71,7 +75,7 @@ class Api extends Component
             ])
         ]);
 
-        $response = new ApiResponse($result->getBody());
+        $response = new ApiResponse($result->getBody()->getContents());
 
         if ($response->hasErrors()) {
             throw new ApiException($response->getErrors(true));
@@ -147,13 +151,13 @@ class Api extends Component
     /**
      * Get exchange rate
      *
-     * @param string $output Y - for replenishment rates, N - for withdrawal rates
+     * @param boolean $output true - for replenishment rates, false - for withdrawal rates
      * @return array
      * Example return: ['rate' => ['RUB/USD' => '0.123', 'RUB/RUB' => 1, ...]]
      */
-    public function getExchangeRate($output = 'Y')
+    public function getExchangeRate($output = true)
     {
-        return $this->call('getExchangeRate', ['output' => $output]);
+        return $this->call('getExchangeRate', ['output' => $output ? 'Y' : 'N']);
     }
 
     /**
@@ -161,24 +165,21 @@ class Api extends Component
      *
      * @param $psId integer Payment system ID
      * @param $sumIn float Withdrawal Amount
-     * @param $curIn string Witdrawal currency: USD, EUR, RUB
      * @param $accountNumber string Recipient wallet number in specified payment system
+     * @param $curIn string Witdrawal currency: USD, EUR, RUB
      * @param $curOut null|string If not specified, will be used curIn value
-     * @param array $restParams
      * @return array
      * Example return: ['outputParams' => ['sumIn' => 1, 'curIn' => 'USD', 'curOut' => 'RUB', 'ps' => 1136053, 'sumOut' => 61.47]]
      */
-    public function initOutput($psId, $sumIn, $curIn, $accountNumber, $curOut = null, array $restParams = [])
+    public function initOutput($psId, $sumIn, $accountNumber, $curIn = self::CURRENCY_USD, $curOut = null)
     {
-        $preparedParams = ArrayHelper::merge($restParams, [
+        return $this->call('initOutput', [
             'ps' => $psId,
-            'curIn' => $curIn,
             'sumIn' => $sumIn,
+            'curIn' => $curIn,
             'curOut' => $curOut ?: $curIn,
             'param_ACCOUNT_NUMBER' => $accountNumber
         ]);
-
-        return $this->call('initOutput', $preparedParams);
     }
 
     /**
@@ -186,24 +187,21 @@ class Api extends Component
      *
      * @param $psId integer Payment system ID
      * @param $sumIn float Withdrawal Amount
-     * @param $curIn string Witdrawal currency: USD, EUR, RUB
      * @param $accountNumber string Recipient wallet number in specified payment system
+     * @param $curIn string Witdrawal currency: USD, EUR, RUB
      * @param $curOut null|string If not specified, will be used curIn value
-     * @param array $restParams
      * @return array
      * Example return: ['historyId' => 1975716, 'outputParams' => ['sumIn' => 1, 'curIn' => 'USD', 'curOut' => 'RUB', 'ps' => 1136053, 'sumOut' => 61.47]]
      */
-    public function output($psId, $sumIn, $curIn, $accountNumber, $curOut = null, array $restParams = [])
+    public function output($psId, $sumIn, $accountNumber, $curIn = self::CURRENCY_USD, $curOut = null)
     {
-        $preparedParams = ArrayHelper::merge($restParams, [
+        return $this->call('output', [
             'ps' => $psId,
             'curIn' => $curIn,
             'sumIn' => $sumIn,
             'curOut' => $curOut ?: $curIn,
             'param_ACCOUNT_NUMBER' => $accountNumber
         ]);
-
-        return $this->call('output', $preparedParams);
     }
 
     /**
