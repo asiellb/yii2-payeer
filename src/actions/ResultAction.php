@@ -7,20 +7,29 @@ namespace yarcode\payeer\actions;
 
 use yarcode\payeer\Merchant;
 use yii\base\Action;
+use yii\base\InvalidConfigException;
 use yii\helpers\ArrayHelper;
 use yii\web\BadRequestHttpException;
 
 class ResultAction extends Action
 {
+    /** @var string Component name */
+    public $componentName;
+
     /** @var Merchant */
-    public $merchant;
+    protected $merchant;
 
     /**
      * @inheritdoc
      */
     public function init()
     {
-        assert($this->merchant);
+        $this->merchant = \Yii::$app->get($this->componentName);
+
+        if(!$this->merchant instanceof Merchant) {
+            throw new InvalidConfigException('Invalid Payeer component name');
+        }
+
         parent::init();
     }
 
