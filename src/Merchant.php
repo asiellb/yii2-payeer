@@ -8,6 +8,7 @@ namespace yarcode\payeer;
 use yarcode\payeer\events\GatewayEvent;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
+use yii\web\HttpException;
 
 /**
  * Class Merchant
@@ -21,19 +22,19 @@ class Merchant extends Component
     const CURRENCY_RUB = 'RUB';
 
     /** @var string Shop id */
-    public $merchantId;
+    public $shopId;
     /** @var string Secret sequence from shop settings */
-    public $merchantSecret;
+    public $secret;
     /** @var string Shop currency */
-    public $merchantCurrency = self::CURRENCY_USD;
+    public $currency = self::CURRENCY_USD;
 
     /**
      * @inheritdoc
      */
     public function init()
     {
-        assert($this->merchantId);
-        assert($this->merchantSecret);
+        assert($this->shopId);
+        assert($this->secret);
 
         parent::init();
     }
@@ -59,12 +60,14 @@ class Merchant extends Component
         }
 
         $event = new GatewayEvent(['gatewayData' => $data]);
+
         $transaction = \Yii::$app->getDb()->beginTransaction();
         try {
             $this->trigger(GatewayEvent::EVENT_PAYMENT_REQUEST, $event);
             if (!$event->handled) {
-                throw new \Exception();
+                throw new HttpException(503, 'Error processing request');
             }
+
             $this->trigger(GatewayEvent::EVENT_PAYMENT_SUCCESS, $event);
             $transaction->commit();
         } catch (\Exception $e) {
@@ -95,11 +98,19 @@ class Merchant extends Component
             ArrayHelper::getValue($data, 'm_curr'),
             ArrayHelper::getValue($data, 'm_desc'),
             ArrayHelper::getValue($data, 'm_status'),
-            $this->merchantSecret,
+            $this->secret,
         ];
 
         $sign = strtoupper(hash('sha256', implode(':', $parts)));
         return ArrayHelper::getValue($data, 'm_sign') == $sign;
     }
 
+    /**
+     * @param $amount
+     * @return string
+     */
+    public static function normalizeAmount($amount)
+    {
+        return number_format($amount, 2, '.', '');
+    }
 }
