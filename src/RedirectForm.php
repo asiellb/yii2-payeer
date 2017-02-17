@@ -18,6 +18,7 @@ class RedirectForm extends Widget
     public $invoiceId;
     public $amount;
     public $description = '';
+    public $currency = null;
 
     /**
      * @inheritdoc
@@ -29,6 +30,8 @@ class RedirectForm extends Widget
         assert(isset($this->merchant));
         assert(isset($this->invoiceId));
         assert(isset($this->amount));
+
+        $this->currency = $this->currency ?: $this->merchant->currency;
     }
 
     /**
@@ -36,16 +39,16 @@ class RedirectForm extends Widget
      */
     public function run()
     {
-        $amount = number_format($this->amount, 2, '.', '');
+        $amount = Merchant::normalizeAmount($this->amount);
         $description = base64_encode($this->description);
 
         $parts = array(
-            $this->merchant->merchantId,
+            $this->merchant->shopId,
             $this->invoiceId,
             $amount,
-            $this->merchant->merchantCurrency,
+            $this->currency,
             $description,
-            $this->merchant->merchantSecret,
+            $this->merchant->secret,
         );
 
         $sign = strtoupper(hash('sha256', implode(':', $parts)));
@@ -54,6 +57,7 @@ class RedirectForm extends Widget
             'merchant' => $this->merchant,
             'invoiceId' => $this->invoiceId,
             'amount' => $amount,
+            'currency' => $this->currency,
             'description' => $description,
             'sign' => $sign,
         ]);
