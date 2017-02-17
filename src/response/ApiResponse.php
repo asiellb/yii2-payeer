@@ -3,7 +3,7 @@
  * @author Valentin Konusov <rlng-krsk@yandex.ru>
  */
 
-namespace yacode\payeer\response;
+namespace yarcode\payeer\response;
 
 use yarcode\payeer\exceptions\ApiException;
 use yii\helpers\ArrayHelper;
@@ -63,7 +63,7 @@ class ApiResponse
     public function getErrors($asJson = false)
     {
         return $asJson
-            ? Json::encode($asJson)
+            ? Json::encode($this->errors)
             : $this->errors;
     }
 
