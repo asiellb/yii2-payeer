@@ -41,10 +41,6 @@ class Api extends Component
     public function init()
     {
         parent::init();
-
-        assert($this->accountNumber);
-        assert($this->apiId);
-        assert($this->apiSecret);
     }
 
     /**
