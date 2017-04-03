@@ -33,9 +33,6 @@ class Merchant extends Component
      */
     public function init()
     {
-        assert($this->shopId);
-        assert($this->secret);
-
         parent::init();
     }
 
